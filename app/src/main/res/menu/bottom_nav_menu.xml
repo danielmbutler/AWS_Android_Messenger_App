@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item
+        android:id="@+id/Menu_Item_UsersFragment"
+        android:title="Users"
+        android:icon="@drawable/ic_baseline_people_24"/>
+    <item
+        android:id="@+id/Menu_Item_MessagesFragment"
+        android:title="Messages"
+        android:icon="@drawable/ic_baseline_message_24"/>
+    <item
+        android:id="@+id/Menu_Item_SettingsFragment"
+        android:title="Settings"
+        android:icon="@drawable/ic_baseline_settings_24"/>
+</menu>

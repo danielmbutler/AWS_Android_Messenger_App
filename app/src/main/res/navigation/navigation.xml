@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<navigation xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/navigation"
+    app:startDestination="@+id/Menu_Item_MessagesFragment">
+
+    <fragment
+        android:id="@+id/Menu_Item_UsersFragment"
+        android:name="com.dbtechprojects.awsmessenger.ui.fragments.UserFragment"
+        android:label="Users"
+        tools:layout="@layout/fragment_user" />
+
+    <fragment
+        android:id="@+id/Menu_Item_MessagesFragment"
+        android:name="com.dbtechprojects.awsmessenger.ui.fragments.MessagesFragment"
+        android:label="Messages"
+        tools:layout="@layout/fragment_messages" />
+
+    <fragment
+        android:id="@+id/Menu_Item_SettingsFragment"
+        android:name="com.dbtechprojects.awsmessenger.ui.fragments.SettingsFragment"
+        android:label="Settings"
+        tools:layout="@layout/fragment_settings" />
+
+
+</navigation>
