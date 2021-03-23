@@ -30,12 +30,16 @@ public final class ChatMessage implements Model {
   public static final QueryField TOID = field("ChatMessage", "toid");
   public static final QueryField TIMESTAMP = field("ChatMessage", "timestamp");
   public static final QueryField READ_RECEIPT = field("ChatMessage", "readReceipt");
+  public static final QueryField HAS_IMAGE = field("ChatMessage", "hasImage");
+  public static final QueryField IMAGE_URL = field("ChatMessage", "imageUrl");
   private final @ModelField(targetType="ID", isRequired = true) String id;
   private final @ModelField(targetType="String") String messageTxt;
   private final @ModelField(targetType="String") String fromid;
   private final @ModelField(targetType="String") String toid;
   private final @ModelField(targetType="Int") Integer timestamp;
   private final @ModelField(targetType="String") String readReceipt;
+  private final @ModelField(targetType="Boolean") Boolean hasImage;
+  private final @ModelField(targetType="String") String imageUrl;
   public String getId() {
       return id;
   }
@@ -60,13 +64,23 @@ public final class ChatMessage implements Model {
       return readReceipt;
   }
   
-  private ChatMessage(String id, String messageTxt, String fromid, String toid, Integer timestamp, String readReceipt) {
+  public Boolean getHasImage() {
+      return hasImage;
+  }
+  
+  public String getImageUrl() {
+      return imageUrl;
+  }
+  
+  private ChatMessage(String id, String messageTxt, String fromid, String toid, Integer timestamp, String readReceipt, Boolean hasImage, String imageUrl) {
     this.id = id;
     this.messageTxt = messageTxt;
     this.fromid = fromid;
     this.toid = toid;
     this.timestamp = timestamp;
     this.readReceipt = readReceipt;
+    this.hasImage = hasImage;
+    this.imageUrl = imageUrl;
   }
   
   @Override
@@ -82,7 +96,9 @@ public final class ChatMessage implements Model {
               ObjectsCompat.equals(getFromid(), chatMessage.getFromid()) &&
               ObjectsCompat.equals(getToid(), chatMessage.getToid()) &&
               ObjectsCompat.equals(getTimestamp(), chatMessage.getTimestamp()) &&
-              ObjectsCompat.equals(getReadReceipt(), chatMessage.getReadReceipt());
+              ObjectsCompat.equals(getReadReceipt(), chatMessage.getReadReceipt()) &&
+              ObjectsCompat.equals(getHasImage(), chatMessage.getHasImage()) &&
+              ObjectsCompat.equals(getImageUrl(), chatMessage.getImageUrl());
       }
   }
   
@@ -95,6 +111,8 @@ public final class ChatMessage implements Model {
       .append(getToid())
       .append(getTimestamp())
       .append(getReadReceipt())
+      .append(getHasImage())
+      .append(getImageUrl())
       .toString()
       .hashCode();
   }
@@ -108,7 +126,9 @@ public final class ChatMessage implements Model {
       .append("fromid=" + String.valueOf(getFromid()) + ", ")
       .append("toid=" + String.valueOf(getToid()) + ", ")
       .append("timestamp=" + String.valueOf(getTimestamp()) + ", ")
-      .append("readReceipt=" + String.valueOf(getReadReceipt()))
+      .append("readReceipt=" + String.valueOf(getReadReceipt()) + ", ")
+      .append("hasImage=" + String.valueOf(getHasImage()) + ", ")
+      .append("imageUrl=" + String.valueOf(getImageUrl()))
       .append("}")
       .toString();
   }
@@ -142,6 +162,8 @@ public final class ChatMessage implements Model {
       null,
       null,
       null,
+      null,
+      null,
       null
     );
   }
@@ -152,7 +174,9 @@ public final class ChatMessage implements Model {
       fromid,
       toid,
       timestamp,
-      readReceipt);
+      readReceipt,
+      hasImage,
+      imageUrl);
   }
   public interface BuildStep {
     ChatMessage build();
@@ -162,6 +186,8 @@ public final class ChatMessage implements Model {
     BuildStep toid(String toid);
     BuildStep timestamp(Integer timestamp);
     BuildStep readReceipt(String readReceipt);
+    BuildStep hasImage(Boolean hasImage);
+    BuildStep imageUrl(String imageUrl);
   }
   
 
@@ -172,6 +198,8 @@ public final class ChatMessage implements Model {
     private String toid;
     private Integer timestamp;
     private String readReceipt;
+    private Boolean hasImage;
+    private String imageUrl;
     @Override
      public ChatMessage build() {
         String id = this.id != null ? this.id : UUID.randomUUID().toString();
@@ -182,7 +210,9 @@ public final class ChatMessage implements Model {
           fromid,
           toid,
           timestamp,
-          readReceipt);
+          readReceipt,
+          hasImage,
+          imageUrl);
     }
     
     @Override
@@ -215,6 +245,18 @@ public final class ChatMessage implements Model {
         return this;
     }
     
+    @Override
+     public BuildStep hasImage(Boolean hasImage) {
+        this.hasImage = hasImage;
+        return this;
+    }
+    
+    @Override
+     public BuildStep imageUrl(String imageUrl) {
+        this.imageUrl = imageUrl;
+        return this;
+    }
+    
     /** 
      * WARNING: Do not set ID when creating a new object. Leave this blank and one will be auto generated for you.
      * This should only be set when referring to an already existing object.
@@ -238,13 +280,15 @@ public final class ChatMessage implements Model {
   
 
   public final class CopyOfBuilder extends Builder {
-    private CopyOfBuilder(String id, String messageTxt, String fromid, String toid, Integer timestamp, String readReceipt) {
+    private CopyOfBuilder(String id, String messageTxt, String fromid, String toid, Integer timestamp, String readReceipt, Boolean hasImage, String imageUrl) {
       super.id(id);
       super.messageTxt(messageTxt)
         .fromid(fromid)
         .toid(toid)
         .timestamp(timestamp)
-        .readReceipt(readReceipt);
+        .readReceipt(readReceipt)
+        .hasImage(hasImage)
+        .imageUrl(imageUrl);
     }
     
     @Override
@@ -270,6 +314,16 @@ public final class ChatMessage implements Model {
     @Override
      public CopyOfBuilder readReceipt(String readReceipt) {
       return (CopyOfBuilder) super.readReceipt(readReceipt);
+    }
+    
+    @Override
+     public CopyOfBuilder hasImage(Boolean hasImage) {
+      return (CopyOfBuilder) super.hasImage(hasImage);
+    }
+    
+    @Override
+     public CopyOfBuilder imageUrl(String imageUrl) {
+      return (CopyOfBuilder) super.imageUrl(imageUrl);
     }
   }
   

@@ -8,6 +8,7 @@ import com.amplifyframework.datastore.generated.model.ChatMessage
 import com.amplifyframework.datastore.generated.model.LatestMessage
 import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.database.Repository
+import java.io.InputStream
 
 class ChatLogViewModel @ViewModelInject constructor(
     private val repository: Repository
@@ -15,6 +16,20 @@ class ChatLogViewModel @ViewModelInject constructor(
     init {
         Log.i("ViewModel", "ViewModel created!")
 
+    }
+
+    suspend fun UploadFile(inputStream: InputStream): String{
+        val imagekey = repository.UploadFile(inputStream)
+        if (imagekey.isNotEmpty()){
+            return imagekey
+        } else{
+            return ""
+        }
+    }
+
+    suspend fun SendImage(S3Url: String, fromid: String, toid: String){
+        repository.sendImage(S3Url, fromid, toid)
+        repository.setLatestMessage("", fromid, toid)
     }
 
     suspend fun getLoggedInUserObject(): User{

@@ -33,6 +33,24 @@ class DatabaseHandler{
 
     private val TAG = "DatabaseHandler"
 
+    suspend fun sendImage(S3Url: String, fromid: String, toid: String){
+        val chatMessage = ChatMessage.builder()
+                .messageTxt("")
+                .fromid(fromid)
+                .toid(toid)
+                .timestamp((System.currentTimeMillis() /1000).toInt())
+                .hasImage(true)
+                .imageUrl(S3Url)
+                .readReceipt("unread")
+                .build()
+        try {
+            Amplify.DataStore.save(chatMessage, this::onSuccess, this::onFailure)
+            Log.i("MyAmplifyApp", "Saved a new message successfully")
+        } catch (error: DataStoreException) {
+            Log.e("MyAmplifyApp", "Error saving post", error)
+        }
+    }
+
 
     suspend fun sendMessage(
         messagetext: String,

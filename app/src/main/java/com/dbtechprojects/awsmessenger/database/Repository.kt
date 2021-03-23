@@ -37,5 +37,7 @@ class Repository @Inject constructor(
 
     suspend fun createLatestMessageAsRead(messagetxt: String, fromid: String, toid: String) = db.createLatestMessageasRead(fromid = fromid, toid = toid, messagetext = messagetxt)
 
+    suspend fun sendImage(S3url: String, fromid: String, toid: String) = db.sendImage(S3url,fromid, toid)
+
 
 }
