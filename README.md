@@ -41,7 +41,7 @@ public static final QueryField EMAIL = field("User", "email");
 
 ## Architecure
 Activities/Fragments -> ViewModel , listeners and Authentication, -> Repository -> Database
-![alt text](https://github.com/danielmbutler/AWS_Android_Messenger_App/blob/master/assets/Architecture%20Diagram.PNG)
+![alt text](https://github.com/danielmbutler/AWS_Android_Messenger_App/blob/master/assets/Architecture%20DiagramV2.PNG)
 
 
 ### Authentication Classes and DB listener
