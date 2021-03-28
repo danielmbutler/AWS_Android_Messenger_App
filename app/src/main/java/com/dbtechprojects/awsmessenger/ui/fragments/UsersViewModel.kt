@@ -3,12 +3,16 @@ package com.dbtechprojects.awsmessenger.ui.fragments
 import android.net.Uri
 import android.util.Log
 import androidx.hilt.lifecycle.ViewModelInject
+import androidx.lifecycle.MutableLiveData
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.ChatMessage
 import com.amplifyframework.datastore.generated.model.LatestMessage
 import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.database.Repository
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import java.io.InputStream
 
 class UsersViewModel @ViewModelInject constructor(
@@ -19,11 +23,17 @@ class UsersViewModel @ViewModelInject constructor(
 
     }
 
+    // observer
+    fun getUserList(): MutableLiveData<List<User>> {
+        return repository.getUsers()
+    }
+
 
     // gets all users from db
-    suspend fun fetchusers(): ArrayList<User>{
-        val users = repository.fetchUsers()
-        return users
+    fun fetchusers(){
+        viewModelScope.launch(Dispatchers.IO) {
+            repository.fetchUsers()
+        }
     }
 
 }

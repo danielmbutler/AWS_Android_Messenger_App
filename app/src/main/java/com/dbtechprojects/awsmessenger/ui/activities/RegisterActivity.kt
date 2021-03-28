@@ -7,6 +7,7 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
+import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.DataStoreException
@@ -14,6 +15,7 @@ import com.amplifyframework.datastore.DataStoreItemChange
 import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.R
 import com.dbtechprojects.awsmessenger.database.AmplifyAuth
+import com.dbtechprojects.awsmessenger.ui.fragments.SettingsViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_register.*
 import kotlinx.android.synthetic.main.fragment_settings.*
@@ -28,6 +30,8 @@ import kotlin.math.log
 class RegisterActivity : AppCompatActivity() {
 
     private val auth = AmplifyAuth()
+
+    private val viewModel: RegisterViewModel by viewModels()
 
     private lateinit var mUsername: String
     private lateinit var mEmail: String
@@ -47,15 +51,14 @@ class RegisterActivity : AppCompatActivity() {
 
                 // SignUp User
 
-                auth.Signup(
+                viewModel.signUpUser(
                     RegisterTxtEmailEditTxt.text.toString(),
                     RegisterTxtUsernameEditTXT.text.toString(),
                     RegisterTxtPasswordEditTxt.text.toString()
                 )
 
                 // Observe result
-
-               auth.SignupValue.observe(this, Observer { result ->
+               viewModel.getSignUpValue().observe(this, Observer { result ->
                     Log.d("registerAct", result.toString())
                     if (result == true){
                         RegisterProgressBar.visibility = View.INVISIBLE
@@ -79,17 +82,17 @@ class RegisterActivity : AppCompatActivity() {
 
                 RegisterProgressBar.visibility = View.VISIBLE
                 // check validation code success from AWS
-                auth.ValidateCode(
+                viewModel.validatecode(
                     mUsername, RegisterConfirmationCodeEditText.text.toString()
                 )
 
                 //observe and respond accordingly
-                auth.ConfirmationCode.observe(this, Observer { result ->
+                viewModel.getValidationCodeValue().observe(this, Observer { result ->
                     Log.d("registerAct", result.toString())
                     if (result == true){
                         RegisterProgressBar.visibility = View.INVISIBLE
-                        auth.CreateUser(mEmail, mUsername)
-                        auth.UserCreated.observe(this, Observer { UserCreationresult ->
+                        viewModel.createUser(mEmail, mUsername)
+                        viewModel.getUserCreatedValue().observe(this, Observer { UserCreationresult ->
                             if (UserCreationresult == true){
                                 redirect()
                             } else{

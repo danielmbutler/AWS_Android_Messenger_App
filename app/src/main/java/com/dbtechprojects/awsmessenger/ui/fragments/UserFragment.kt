@@ -6,6 +6,7 @@ import android.util.Log
 import android.view.*
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
+import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.User
@@ -34,14 +35,12 @@ class UserFragment : Fragment() {
 
         binding = FragmentUserBinding.inflate(inflater, container, false)
         val view = binding.root
-        GlobalScope.launch(Dispatchers.Main) {
-            val users = viewModel.fetchusers()
 
-            if (users.isNotEmpty()){
-                setuprv(users)
-            }
 
-        }
+        viewModel.fetchusers()
+        viewModel.getUserList().observe(viewLifecycleOwner, Observer { users ->
+            setuprv(users)
+        })
 
         return view
     }

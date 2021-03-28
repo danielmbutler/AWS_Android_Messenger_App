@@ -34,7 +34,8 @@ class MessagesFragment : Fragment() {
     private val viewModel: MessagesViewModel by viewModels()
     private lateinit var binding: FragmentMessagesBinding
     private lateinit var User: User
-    private val dbListener = DatabaseListener()
+    private var mAdapter: LatestMessageAdapter? = null
+
 
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
@@ -43,33 +44,43 @@ class MessagesFragment : Fragment() {
 
         binding = FragmentMessagesBinding.inflate(inflater, container, false)
         val view = binding.root
-        GlobalScope.launch(Dispatchers.IO) {
+
             // check sign in from amplify auth class
-            val check = checkSignIn()
-            if (check == true){
-                refreshview() // get list of latest messages, set up recyclerview
-                ListenForMessages() // setup latest message listener
+            checkSignIn()
 
-            } else{
-                //if user not logged in then redirect
-                val intent = Intent(requireContext(), LoginActivity::class.java)
-                startActivity(intent)
-                activity?.finish()
-            }
-
-        }
 
 
 
         return view
     }
 
-    private suspend fun checkSignIn(): Boolean {
+    private fun checkSignIn(){
+        viewModel.checkSessionValue()
 
-        val check = AmplifyAuth().checkSignIn()
-        return check
+        viewModel.getSessionValue().observe(viewLifecycleOwner, Observer { result ->
+            if (result){
+                viewModel.QueryLoggedInUserObject()
+                viewModel.getLoggedInUserObject().observe(viewLifecycleOwner, Observer { user ->
+                    if (user.id != "error"){
+                        User = user
+                        getLatestMessages(User)
+                        ListenForMessages()
+                    }
+                })
 
+            }
+            else{
+                //if user not logged in then redirect
+                val intent = Intent(requireContext(), LoginActivity::class.java)
+                startActivity(intent)
+                activity?.finish()
+            }
+
+        })
     }
+
+
+
 
     private fun setuprv(list: List<LatestMessage>, user: User){
 
@@ -77,9 +88,12 @@ class MessagesFragment : Fragment() {
         MessagesFragmentRV.layoutManager = lm
 
         // reverse list so newest messages are at the top
+        mAdapter?.notifyDataSetChanged()
 
-        val adapter = LatestMessageAdapter(list.reversed(),User,requireContext())
-        adapter.setOnClickListener(object: LatestMessageAdapter.OnClickListener{
+        Log.d("MessageActivity", "sending list: ${list.toString()}")
+
+        mAdapter = LatestMessageAdapter(list.reversed(),User,requireContext())
+        mAdapter!!.setOnClickListener(object: LatestMessageAdapter.OnClickListener{
             override fun onClick(position: Int, model: User, message: LatestMessage,view: View) {
                 Log.d("MessageActivity", "clicked")
 
@@ -98,7 +112,7 @@ class MessagesFragment : Fragment() {
 
         })
 
-        MessagesFragmentRV.adapter = adapter
+        MessagesFragmentRV.adapter = mAdapter
         // add faintline under RV Item
         MessagesFragmentRV.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
 
@@ -106,37 +120,25 @@ class MessagesFragment : Fragment() {
 
     override fun onResume() {
         super.onResume()
-        GlobalScope.launch(Dispatchers.IO) { checkSignIn() }
     }
 
-     suspend fun ListenForMessages(){
-         withContext(Dispatchers.Main){
+    fun ListenForMessages(){
+
              MessagesFragmentRV.invalidate()
              // setup latest message listener , for each new message refresh recyclerview
-             dbListener.listenforLatestMessages(User)
-             dbListener.latestmessage.observe(viewLifecycleOwner, Observer { message ->
-                 GlobalScope.launch { refreshview() }
+             viewModel.setupLatestMessageListener(User)
+             viewModel.getIncomingLatestMessage().observe(viewLifecycleOwner, Observer { message ->
+                  getLatestMessages(User)
              })
-         }
+
     }
 
-    suspend fun getLatestMessages(user: User): List<LatestMessage>{
-        val latestsmessages = viewModel.getLatestMessages(user.id)
-        return latestsmessages
-    }
+     fun getLatestMessages(user: User){
+        viewModel.QueryLatestMessages(user.id)
+       viewModel.getLatestMessages().observe(viewLifecycleOwner, Observer { messages->
+            setuprv(messages, User)
+        })
 
-    suspend fun refreshview(){
-
-        withContext(Dispatchers.Main){
-            User = viewModel.getLoggedInUserObject()
-
-            // get latest messages for loggedin user
-           val list = getLatestMessages(User)
-
-            if (list.isNotEmpty()){
-                setuprv(list, User)
-            }
-        }
     }
 
 

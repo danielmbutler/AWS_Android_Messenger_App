@@ -20,6 +20,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import java.io.InputStream
 import javax.inject.Inject
 import kotlin.coroutines.resume
@@ -32,8 +33,13 @@ class DatabaseHandler{
 
 
     private val TAG = "DatabaseHandler"
+    val UploadedFileValue                 : MutableLiveData<String> = MutableLiveData()
+    val LoggedInUser                      : MutableLiveData<User> = MutableLiveData()
+    val ChatMessageList                   : MutableLiveData<List<ChatMessage>> = MutableLiveData()
+    val LatestMessageList                 : MutableLiveData<List<LatestMessage>> = MutableLiveData()
+    val UsersList                         : MutableLiveData<List<User>> = MutableLiveData()
 
-    suspend fun sendImage(S3Url: String, fromid: String, toid: String){
+    fun sendImage(S3Url: String, fromid: String, toid: String){
         val chatMessage = ChatMessage.builder()
                 .messageTxt("")
                 .fromid(fromid)
@@ -52,7 +58,7 @@ class DatabaseHandler{
     }
 
 
-    suspend fun sendMessage(
+  fun sendMessage(
         messagetext: String,
         fromid: String,
         toid: String,
@@ -78,7 +84,7 @@ class DatabaseHandler{
 
     }
 
-    suspend fun setLatestMessageasRead(message: LatestMessage){
+    fun setLatestMessageasRead(message: LatestMessage){
             val messagetosave = LatestMessage.builder()
                 .messageTxt(message.messageTxt)
                 .fromid(message.fromid)
@@ -98,7 +104,7 @@ class DatabaseHandler{
 
     }
 
-    suspend fun setLatestMessage(
+    fun setLatestMessage(
         messagetext: String,
         fromid: String,
         toid: String,
@@ -148,7 +154,7 @@ class DatabaseHandler{
 
 
     // if user who is sent the message is observing chat log
-    suspend fun createLatestMessageasRead(
+    fun createLatestMessageasRead(
         messagetext: String,
         fromid: String,
         toid: String,
@@ -199,8 +205,8 @@ class DatabaseHandler{
     private fun onFailure(dataStoreException: DataStoreException) = dataStoreException.printStackTrace()
 
 
-    suspend fun getMessages(fromid: String, toid: String): List<ChatMessage>{
-        return suspendCoroutine { continuation ->
+    fun getMessages(fromid: String, toid: String){
+
             val list = arrayListOf<ChatMessage>()
             Amplify.DataStore.query(ChatMessage::class.java, Where.matches(
                 ChatMessage.FROMID.eq(fromid).and(ChatMessage.TOID.eq(toid))
@@ -212,16 +218,22 @@ class DatabaseHandler{
                             list.add(it)
                             Log.d("DatabaseHandler", it.toString())
                         }
-                        continuation.resume(list)
+                        ChatMessageList.postValue(list)
 
 
                     }
 
 
                 },
-                { Log.e("MyAmplifyApp", "Query failed", it) }
+                {
+                    Log.e("MyAmplifyApp", "Query failed", it)
+                    val chatmessage = ChatMessage.builder()
+                            .id("error")
+                            .build()
+                    list.add(chatmessage)
+                    ChatMessageList.postValue(list)
+                }
             )
-        }
 
     }
 
@@ -243,9 +255,8 @@ class DatabaseHandler{
 
     }
 
-    suspend fun getLatestMessages(fromid: String): List<LatestMessage>{
+     fun getLatestMessages(fromid: String){
         println("latestmessage fromid $fromid")
-        return suspendCoroutine { continuation ->
             val list = arrayListOf<LatestMessage>()
             Amplify.DataStore.query(LatestMessage::class.java, Where.matches(
                 LatestMessage.FROMID.eq(
@@ -257,41 +268,46 @@ class DatabaseHandler{
                         ChatMesssage.forEach {
                             list.add(it)
                         }
-                        continuation.resume(list)
+                       GlobalScope.launch(Dispatchers.Main) {
+                            LatestMessageList.setValue(list)
+                        }
                     }
 
                 },
-                { Log.e("MyAmplifyApp", "Query failed", it) }
+                {
+                    Log.e("MyAmplifyApp", "Query failed", it)
+
+                }
             )
-        }
+
 
     }
 
-    suspend fun getLoggedInUserObject(): User {
+     fun getLoggedInUserObject() {
 
-        return suspendCoroutine { continuation ->
             Amplify.DataStore.query(
                 User::class.java,
                 Where.matches(User.EMAIL.eq(Amplify.Auth.currentUser.username)),
                 { response ->
                     response.forEach {
-                        continuation.resume(it)
+                        LoggedInUser.postValue(it)
+
                     }
 
                 },
                 { error ->
                     Log.e("AmplifyApi", "Query failure", error)
                     // return default data
+                    val user = User.builder()
+                            .id("error")
+                            .build()
+                    LoggedInUser.postValue(user)
                 }
             )
-        }
 
     }
 
-     suspend fun uploadFile(exampleInputStream: InputStream) : String {
-        return suspendCoroutine{ continuation ->
-
-
+   fun uploadFile(exampleInputStream: InputStream) {
 
             println("Upload: $exampleInputStream")
 
@@ -301,32 +317,32 @@ class DatabaseHandler{
                 Amplify.Storage.uploadInputStream(
                     "UploadedFile" + randomNumber.toString() + ".jpg",
                     it,
-                    { result -> continuation.resume(result.key)},
-                    { error -> Log.e("MyAmplifyApp", "Upload failed", error) }
+                    { result ->
+
+                        UploadedFileValue.setValue(result.key)
+                    },
+                    { error ->
+                        Log.e("MyAmplifyApp", "Upload failed", error)
+                        UploadedFileValue.setValue("error")
+                    }
                 )
             }
-        }
-
     }
 
-    suspend fun fetchusers() : ArrayList<User> {
-        return suspendCoroutine { continuation ->
+     fun fetchusers()  {
+
             Amplify.DataStore.query(User::class.java,
                 { Users -> run {
                     val users = arrayListOf<User>()
                     Users.forEach {
                         users.add(it)
                     }
-                    continuation.resume(users)
+                    UsersList.postValue(users)
                 }
 
                 },
                 { Log.e("MyAmplifyApp", "Query failed", it) }
             )
         }
-
-    }
-
-
 
 }

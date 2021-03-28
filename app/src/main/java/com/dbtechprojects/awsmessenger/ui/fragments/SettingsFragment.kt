@@ -44,7 +44,6 @@ class SettingsFragment : Fragment() {
     private lateinit var binding: FragmentSettingsBinding
     private var mImageUri: Uri? = null
     private lateinit var LoggedInUser: User
-    private val auth = AmplifyAuth()
 
 
     override fun onCreateView(
@@ -65,9 +64,7 @@ class SettingsFragment : Fragment() {
             binding.SettingsEmailView.text = username
         }
 
-        GlobalScope.launch(Dispatchers.IO) {
-            SetupProfileView()
-        }
+        SetupProfileView()
 
         binding.SettingsLogoutBTN.setOnClickListener {
             Amplify.Auth.signOut(
@@ -121,9 +118,8 @@ class SettingsFragment : Fragment() {
             if (LoggedInUser.username != SettingsTxtUsernameEditTXT.text.toString()){
                 if (SettingsTxtUsernameEditTXT.text.toString().isNotEmpty()){
                     SettingsProgressBar.visibility = View.VISIBLE
-                    GlobalScope.launch(Dispatchers.IO) {
-                        updateUsername(LoggedInUser.id, SettingsTxtUsernameEditTXT.text.toString())
-                    }
+
+                    updateUsername(LoggedInUser.id, SettingsTxtUsernameEditTXT.text.toString())
                 }
             }
 
@@ -131,17 +127,17 @@ class SettingsFragment : Fragment() {
             if (mImageUri != null){
                 val inputstream = activity?.contentResolver?.openInputStream(mImageUri!!)
                 SettingsProgressBar.visibility = View.VISIBLE
-                GlobalScope.launch(Dispatchers.IO) {
-                    val imagekey = viewModel.UploadFile(inputstream!!)
-                    if (imagekey.isNotEmpty()){
-                       updateImagee(imagekey)
-                    }
-                }
 
+                   viewModel.uploadFile(inputstream!!)
+                   viewModel.getUploadedFileKey().observe(viewLifecycleOwner, Observer { key ->
+                       if(key != "error"){
+                           updateImage(key)
+                       }
+
+                   })
             }
 
         }
-
 
 
         return view
@@ -188,17 +184,16 @@ class SettingsFragment : Fragment() {
 
 
 
-    private suspend fun updateImagee(ImageKey: String){
+    private  fun updateImage(ImageKey: String){
         val user = LoggedInUser
 
 
         Log.i("SettingsFragment", "matcheduser: ${user.id}")
 
             // call edit profile image and observe result
-            auth.EditProfileImage(LoggedInUser.id,ImageKey)
+            viewModel.editProfileImage(LoggedInUser.id,ImageKey)
 
-        withContext(Dispatchers.Main){
-            auth.ProfileImageEdited.observe(requireActivity(), Observer { result ->
+            viewModel.getProfileImageEditedValue().observe(requireActivity(), Observer { result ->
                 if (result == true){
                     Toast.makeText(requireContext(), "Profile Updated", Toast.LENGTH_SHORT).show()
                     SettingsProgressBar.visibility = View.GONE
@@ -207,63 +202,85 @@ class SettingsFragment : Fragment() {
                     SettingsProgressBar.visibility = View.GONE
                 }
             })
-        }
+
 
     }
 
-    private suspend fun updateUsername(userid: String, username : String){
-        auth.EditUsername(userid,username)
-        withContext(Dispatchers.Main){
-            auth.UsernameEdited.observe(requireActivity(), Observer { result ->
+
+
+    private  fun updateUsername(userid: String, username : String){
+        viewModel.edituser(userid,username)
+
+           viewModel.isUsernameUpdated().observe(requireActivity(), Observer { result ->
                 if (result == true){
                     Toast.makeText(requireContext(), "Profile Updated", Toast.LENGTH_SHORT).show()
                     SettingsProgressBar.visibility = View.GONE
-                    GlobalScope.launch { LoggedInUser = viewModel.getLoggedInUserObject() }
 
-                } else{
+                        viewModel.queryLoggedInUserObject()
+                        viewModel.getLoggedInUserObject().observe(viewLifecycleOwner, Observer { user ->
+                            if (user.id != "error"){
+                                LoggedInUser = user
+                            } else {
+                                Toast.makeText(requireContext(), "Profile Update failed", Toast.LENGTH_SHORT).show()
+                                SettingsProgressBar.visibility = View.GONE
+                            }
+                        })
+            }else {
                     Toast.makeText(requireContext(), "Profile Update failed", Toast.LENGTH_SHORT).show()
                     SettingsProgressBar.visibility = View.GONE
                 }
+
             })
-        }
     }
 
 
-    private suspend fun SetupProfileView(){
+    fun SetupProfileView(){
 
-        withContext(Dispatchers.Main) {
+        // get logged in user object and setup profile from details
 
-            // get logged in user object and setup profile from details
-            LoggedInUser = viewModel.getLoggedInUserObject()
-            Log.d("settingsActivity", LoggedInUser.toString())
-            binding.SettingsTxtUsernameEditTXT.setText(LoggedInUser.username)
-            if (!LoggedInUser.profilePhotoUrl.isNullOrEmpty()){
-                ImageUtils().loadImage(requireContext(), binding.SettingsImgView,
-                    Constants.S3_LINK + LoggedInUser.profilePhotoUrl
-                )
+        viewModel.queryLoggedInUserObject()
+        viewModel.getLoggedInUserObject().observe(viewLifecycleOwner, Observer { user ->
+            if (user.id != "error"){
+                LoggedInUser = user
+                Log.d("settingsActivity", LoggedInUser.toString())
+                binding.SettingsTxtUsernameEditTXT.setText(LoggedInUser.username)
+                if (!LoggedInUser.profilePhotoUrl.isNullOrEmpty()){
+                    ImageUtils().loadImage(requireContext(), binding.SettingsImgView,
+                            Constants.S3_LINK + LoggedInUser.profilePhotoUrl
+                    )
+                }
+
+            } else {
+                Toast.makeText(requireContext(), "Profile Query Failed", Toast.LENGTH_SHORT).show()
+                SettingsProgressBar.visibility = View.GONE
             }
-        }
-
+        })
     }
 
     private fun createuser(username: String){
         if (username.isNotEmpty() && SettingsTxtUsernameEditTXT.text.toString().isNotEmpty()) {
             // run create user command from amplify auth and reserve results
-            auth.CreateUser(username, SettingsTxtUsernameEditTXT.text.toString())
+            viewModel.createUser(username, SettingsTxtUsernameEditTXT.text.toString())
 
-            auth.UserCreated.observe(viewLifecycleOwner, Observer { UserCreationresult ->
+            viewModel.getUserCreatedValue().observe(viewLifecycleOwner, Observer { UserCreationresult ->
                 if (UserCreationresult == true){
                     Toast.makeText(requireContext(), "Profile created", Toast.LENGTH_SHORT).show()
                     if (mImageUri != null){
                         val inputstream = activity?.contentResolver?.openInputStream(mImageUri!!)
                         SettingsProgressBar.visibility = View.VISIBLE
-                        GlobalScope.launch(Dispatchers.IO) {
-                            val imagekey = viewModel.UploadFile(inputstream!!)
-                            if (imagekey.isNotEmpty()){
-                                updateImagee(imagekey)
-                            }
-                        }
 
+                        viewModel.uploadFile(inputstream!!)
+
+                        viewModel.getUploadedFileKey().observe(viewLifecycleOwner, Observer { result ->
+                            if (result != "error")
+                            {
+                                updateImage(result)
+                            } else
+                            {
+                                Toast.makeText(requireContext(), "something went wrong", Toast.LENGTH_SHORT).show()
+                                RegisterProgressBar.visibility = View.INVISIBLE
+                            }
+                        })
                     }
 
                 } else{

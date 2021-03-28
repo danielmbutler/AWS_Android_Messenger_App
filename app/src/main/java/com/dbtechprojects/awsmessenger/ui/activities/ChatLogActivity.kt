@@ -3,34 +3,24 @@ package com.dbtechprojects.awsmessenger.ui.activities
 import android.Manifest
 import android.app.Activity
 import android.content.Context
-import android.content.DialogInterface
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.net.Uri
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.provider.ContactsContract
 import android.provider.MediaStore
 import android.util.Log
-import android.view.View
 import androidx.activity.viewModels
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Lifecycle
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.ChatMessage
-import com.amplifyframework.datastore.generated.model.LatestMessage
 import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.R
-import com.dbtechprojects.awsmessenger.database.AmplifyAuth
-import com.dbtechprojects.awsmessenger.database.DatabaseHandler
 import com.dbtechprojects.awsmessenger.database.DatabaseListener
 import com.dbtechprojects.awsmessenger.database.entitites.LocalUserModel
-import com.dbtechprojects.awsmessenger.ui.adapters.LatestMessageAdapter
 import com.dbtechprojects.awsmessenger.ui.dialog.SendImageDialog
-import com.dbtechprojects.awsmessenger.ui.fragments.MessagesViewModel
 import com.dbtechprojects.awsmessenger.util.Constants
 import com.dbtechprojects.awsmessenger.util.ImageUtils
 import com.dbtechprojects.awsmessenger.util.Mapper
@@ -52,9 +42,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import java.io.IOException
-import java.text.SimpleDateFormat
-import java.time.Instant
-import java.time.ZoneId
 import java.util.*
 
 @AndroidEntryPoint
@@ -63,9 +50,10 @@ class ChatLogActivity : AppCompatActivity(), SendImageDialog.ImagePicker {
     private val viewModel: ChatLogViewModel by viewModels()
     private var fromUser: User? = null
     private var ToUser: User? = null
-    private var auth = AmplifyAuth()
     private var latestchatmessage: ChatMessage? = null
     val adapter = GroupAdapter<GroupieViewHolder>()
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_chat_log)
@@ -85,26 +73,37 @@ class ChatLogActivity : AppCompatActivity(), SendImageDialog.ImagePicker {
 
         recyclerview_chatlog.adapter = adapter
 
-        GlobalScope.launch(Dispatchers.Main) {
-            fromUser = viewModel.getLoggedInUserObject()
+        // GET LOGGED IN USER
 
-            val messages = viewModel.getChatMessages(fromid = fromUser!!.id, toid = ToUser!!.id)
+            viewModel.QueryLoggedInUserObject()
+            viewModel.getLoggedInUserObject().observe(this, androidx.lifecycle.Observer { user ->
+                if(user.id != "error"){
+                    fromUser = user
+                    viewModel.QueryChatMessages(fromid = fromUser!!.id, toid = ToUser!!.id)
+                    // SETUP LISTENER
+                    viewModel.setupChatMessageListener(ToUser!!.id, fromUser!!.id)
+                } else {
+                    val intent = Intent(this, MainActivity::class.java)
+                    startActivity(intent)
+                    finish()
+                }
+            })
 
-            messages.forEach(){
-                setuprv(it)
-            }
-            Log.d("chatlog", messages.toString())
-            val user = viewModel.getLoggedInUserObject()
-            fromUser = user
-            val dblistener = DatabaseListener()
-            dblistener.listenformessages(ToUser!!.id, fromUser!!.id)
-            dblistener.message.observe(this@ChatLogActivity, androidx.lifecycle.Observer {
+        // GET CHAT MESSAGES
+            viewModel.getChatMessages().observe(this, { messages ->
+                messages.forEach {
+                    setuprv(it)
+                    Log.d("chatlog", messages.toString())
+                }
+            })
 
+
+            viewModel.listenForChatMessages().observe(this, {
                 setuprv(it)
                 latestchatmessage = it
             })
 
-        }
+
 
         // starts chat from bottom
         val layoutManager = LinearLayoutManager(this)
@@ -201,7 +200,6 @@ class ChatLogActivity : AppCompatActivity(), SendImageDialog.ImagePicker {
         val toId = ToUser?.id
 
 
-        GlobalScope.launch(Dispatchers.Main) {
             viewModel.SendImage(imagekey,fromId,toId!!)
 
             if (fromId != toId){
@@ -216,8 +214,6 @@ class ChatLogActivity : AppCompatActivity(), SendImageDialog.ImagePicker {
                 // scroll to bottom
                 recyclerview_chatlog.scrollToPosition(adapter.itemCount - 1)
             }
-
-        }
 
 
     }
@@ -235,7 +231,6 @@ class ChatLogActivity : AppCompatActivity(), SendImageDialog.ImagePicker {
 
         // send to Aws
 
-        GlobalScope.launch(Dispatchers.Main) {
             viewModel.SendMessage(messagetxt = text, fromid = fromId, toid = toId!! )
             // add chat item to chat if user is not logged in user (creates duplicates)
 
@@ -251,8 +246,6 @@ class ChatLogActivity : AppCompatActivity(), SendImageDialog.ImagePicker {
                 // scroll to bottom
                 recyclerview_chatlog.scrollToPosition(adapter.itemCount - 1)
             }
-
-        }
 
         editText_chatlog.setText("")
 
@@ -432,9 +425,8 @@ private fun setLatestMessageStatus(messagetxt: String,fromid: String, toid: Stri
         val test = getLifecycle().getCurrentState().isAtLeast(Lifecycle.State.RESUMED)
         if (test == true){
             // user is observing chat activity lets set the latest message to read
-            GlobalScope.launch(Dispatchers.Main) {
+
                viewModel.CreateLatestMessageAsRead(messagetxt = messagetxt, fromid = fromid, toid = toid)
-            }
 
         }
     }
@@ -458,14 +450,15 @@ private fun setLatestMessageStatus(messagetxt: String,fromid: String, toid: Stri
 
         // send file picked from picker for upload and get ImageKey
         val inputstream = this.contentResolver?.openInputStream(uri)
-        GlobalScope.launch(Dispatchers.IO) {
 
-            val imagekey = viewModel.UploadFile(inputstream!!)
-            if (imagekey.isNotEmpty()){
-                sendImageMessage(imagekey)
-            }
+            viewModel.UploadFile(inputstream!!)
+            viewModel.getUploadedFileKey().observe(this, androidx.lifecycle.Observer { result ->
+              if (result != "error"){
+                  sendImageMessage(result)
+              }
+            })
+
         }
-    }
 
 }
 

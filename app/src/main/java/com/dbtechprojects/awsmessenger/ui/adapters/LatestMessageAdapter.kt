@@ -32,6 +32,7 @@ class LatestMessageAdapter(
     private var onClickListener: OnClickListener? = null
 
 
+
     inner class UserViewHolder(itemview: View): RecyclerView.ViewHolder(itemview)
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): UserViewHolder {

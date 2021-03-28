@@ -1,9 +1,6 @@
 package com.dbtechprojects.awsmessenger.database
 
-import android.content.Intent
 import android.util.Log
-import android.view.View
-import android.widget.Toast
 import androidx.lifecycle.MutableLiveData
 import com.amplifyframework.auth.AuthException
 import com.amplifyframework.auth.AuthUserAttributeKey
@@ -15,10 +12,6 @@ import com.amplifyframework.core.model.query.Where
 import com.amplifyframework.datastore.DataStoreException
 import com.amplifyframework.datastore.DataStoreItemChange
 import com.amplifyframework.datastore.generated.model.User
-import com.dbtechprojects.awsmessenger.ui.activities.LoginActivity
-import com.dbtechprojects.awsmessenger.ui.activities.MainActivity
-import kotlinx.android.synthetic.main.activity_register.*
-import kotlinx.android.synthetic.main.fragment_settings.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
@@ -31,12 +24,14 @@ class AmplifyAuth {
 
     private  val TAG = "AmplifyAuth"
 
-    val SignupValue         : MutableLiveData<Boolean> = MutableLiveData()
-    val ConfirmationCode    : MutableLiveData<Boolean> = MutableLiveData()
-    val UserCreated         : MutableLiveData<Boolean> = MutableLiveData()
-    val UsernameEdited      : MutableLiveData<Boolean> = MutableLiveData()
-    val ProfileImageEdited  : MutableLiveData<Boolean> = MutableLiveData()
-    val SignInValue         : MutableLiveData<Boolean> = MutableLiveData()
+    val SignupValue                    : MutableLiveData<Boolean> = MutableLiveData()
+    val ConfirmationCode               : MutableLiveData<Boolean> = MutableLiveData()
+    val UserCreated                    : MutableLiveData<Boolean> = MutableLiveData()
+    val UsernameEdited                 : MutableLiveData<Boolean> = MutableLiveData()
+    val ProfileImageEdited             : MutableLiveData<Boolean> = MutableLiveData()
+    val SignInResultConfirmation       : MutableLiveData<Boolean> = MutableLiveData()
+    val isUserSignedIn                 : MutableLiveData<Boolean> = MutableLiveData()
+
 
     fun Signup(email: String, Username: String, Password: String) {
 
@@ -127,14 +122,14 @@ class AmplifyAuth {
     private fun onSignInSucess(authSignInResult: AuthSignInResult){
         Log.d(TAG, "SignIn Success")
         GlobalScope.launch(Dispatchers.Main) {
-            SignInValue.setValue(true)
+            SignInResultConfirmation.setValue(true)
 
         }
     }
     private fun onSignInError(e: AuthException){
         Log.d(TAG,"${e.message}")
         GlobalScope.launch(Dispatchers.Main) {
-            SignInValue.setValue(false)
+            SignInResultConfirmation.setValue(false)
 
         }
 
@@ -176,7 +171,7 @@ class AmplifyAuth {
         }
     }
 
-    suspend fun EditUsername(uid: String, username: String) {
+    fun EditUsername(uid: String, username: String) {
 
             Amplify.DataStore.query(User::class.java, Where.id(uid),
                 { matches ->
@@ -254,19 +249,19 @@ class AmplifyAuth {
     }
 
 
-     suspend fun checkSignIn(): Boolean{
-        return suspendCoroutine {
-            continuation ->
+      fun checkSignIn(){
+
             Amplify.Auth.fetchAuthSession(
                 { result ->
                     run {
                         if (!result.isSignedIn){
                             Log.d("LoginActivity", "not signed in")
-                            continuation.resume(false)
+
+                            isUserSignedIn.postValue(false)
 
                         } else{
-                            continuation.resume(true)
 
+                            isUserSignedIn.postValue(true)
                         }
 
                     }
@@ -274,7 +269,6 @@ class AmplifyAuth {
                 },
                 { error -> Log.e("Main Activity", error.toString()) }
             )
-        }
 
     }
 

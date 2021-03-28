@@ -6,6 +6,8 @@ import android.content.pm.PackageManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import androidx.activity.viewModels
+import androidx.lifecycle.Observer
 import androidx.navigation.findNavController
 import androidx.navigation.ui.AppBarConfiguration
 import androidx.navigation.ui.setupActionBarWithNavController
@@ -26,10 +28,12 @@ import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class MainActivity : AppCompatActivity() {
+
+    private val viewModel: MainActivityViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        GlobalScope.launch(Dispatchers.IO) { checkSignIn() }
+         checkSignIn()
 
         setupBottomNavView()
 
@@ -38,7 +42,7 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-        GlobalScope.launch(Dispatchers.IO) { checkSignIn() }
+        checkSignIn()
     }
 
     private fun setupBottomNavView(){
@@ -65,19 +69,21 @@ class MainActivity : AppCompatActivity() {
         finish()
     }
 
-    suspend fun checkSignIn(){
+    fun checkSignIn(){
 
-        val check = AmplifyAuth().checkSignIn()
-        if (check){
-            Log.d("MainActivity", Amplify.Auth.currentUser.username)
-            val pref = SharedPref(this).sharedPref
-            val edit = pref.edit()
-            edit.putString("username", Amplify.Auth.currentUser.username)
-            edit.apply()
-        } else {
-            redirect()
-        }
+        viewModel.checkSessionValue()
+        viewModel.getSessionValue().observe(this, Observer { check ->
+            if (check){
+                Log.d("MainActivity", Amplify.Auth.currentUser.username)
+                val pref = SharedPref(this).sharedPref
+                val edit = pref.edit()
+                edit.putString("username", Amplify.Auth.currentUser.username)
+                edit.apply()
+            } else {
+                redirect()
+            }
 
+        })
     }
 
 

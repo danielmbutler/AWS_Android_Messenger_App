@@ -6,35 +6,33 @@ import android.os.Bundle
 import android.util.Log
 import android.view.View
 import android.widget.Toast
-import androidx.exifinterface.media.ExifInterface
+import androidx.activity.viewModels
 import androidx.lifecycle.Observer
-import com.amplifyframework.auth.AuthException
-import com.amplifyframework.auth.result.AuthSignInResult
 import com.amplifyframework.core.Amplify
 import com.dbtechprojects.awsmessenger.R
 import com.dbtechprojects.awsmessenger.database.AmplifyAuth
-import com.dbtechprojects.awsmessenger.util.SharedPref
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_login.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 @AndroidEntryPoint
 class LoginActivity : AppCompatActivity() {
+
+    private val viewModel: LoginViewModel by viewModels()
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_login)
 
-        val auth = AmplifyAuth()
 
-        GlobalScope.launch(Dispatchers.IO) {
-            val check = auth.checkSignIn()
-            // if user is already signed in lets redirect to main activity
-            if(check == true){
-                LoginSuccess()
-            }
-        }
+            viewModel.checkSessionValue()
+            viewModel.getSessionValue().observe(this, Observer { result ->
+                // if user is already signed in lets redirect to main activity
+                if (result == true){
+                    LoginSuccess()
+                }
+            })
+
+
+
 
         LoginRegisterBtn.setOnClickListener {
             val intent = Intent(this, RegisterActivity::class.java)
@@ -49,12 +47,12 @@ class LoginActivity : AppCompatActivity() {
                 return@setOnClickListener
             } else{
                 LoginProgressBar.visibility = View.VISIBLE
-               auth.SignIn(
+               viewModel.signInUser(
                    LoginTxtUsernameEditTxt.text.toString(),
                    LoginTxtPasswordEditTxt.text.toString()
                )
                 // check livedata to see if user sign in was successeful
-               auth.SignInValue.observe(this, Observer { result->
+               viewModel.getSignedInConfirmation().observe(this, Observer { result->
                    if (result == true){
                        LoginSuccess()
                        LoginProgressBar.visibility = View.INVISIBLE

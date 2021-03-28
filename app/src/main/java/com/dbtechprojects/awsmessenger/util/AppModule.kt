@@ -1,8 +1,10 @@
 package com.dbtechprojects.awsmessenger.util
 
 import android.content.Context
+import android.provider.ContactsContract
 import com.dbtechprojects.awsmessenger.database.AmplifyAuth
 import com.dbtechprojects.awsmessenger.database.DatabaseHandler
+import com.dbtechprojects.awsmessenger.database.DatabaseListener
 import dagger.Module
 import dagger.Provides
 import dagger.hilt.InstallIn
@@ -23,5 +25,8 @@ class AppModule {
 
     @Provides
     fun provideAuth(@ActivityContext context: Context): AmplifyAuth = AmplifyAuth()
+
+    @Provides
+    fun provideDBListener(@ActivityContext context: Context): DatabaseListener = DatabaseListener()
 
 }
