@@ -1,6 +1,6 @@
 # AWS_Android_Messenger_App
 
-Messenger app with AWS amplify backend and realtime database , supports realtime chat between 2 users, notifications and timestamps, profile setup and a users screen to display all signed up users.
+Messenger app with AWS amplify backend and realtime database , supports realtime chat between 2 users (including sending images), notifications and timestamps, profile setup and a users screen to display all signed up users.
 
 Login Page -> Register, Sign in
 Main Activity -> 3 Fragments -> Contacts, Messages, settings (Sign Out)
@@ -114,6 +114,9 @@ class DatabaseListener {
   <img src="https://github.com/danielmbutler/AWS_Android_Messenger_App/blob/master/assets/Messenger%20View%20Notification.PNG" width="300" >
   <img src="https://github.com/danielmbutler/AWS_Android_Messenger_App/blob/master/assets/Messages%20view.PNG" width="300">
   <img src="https://github.com/danielmbutler/AWS_Android_Messenger_App/blob/master/assets/Profile%20View.PNG" width="300">
+</p>
+<p align="center">
+ <img src="https://github.com/danielmbutler/AWS_Android_Messenger_App/blob/master/assets/Picture%20Messaging.PNG" height="600" width="600">
 </p>
 <p align="center">
   <img src="https://github.com/danielmbutler/AWS_Android_Messenger_App/blob/master/assets/AWS%20Messenger%20demo%20gif.gif" width="700" height="600" >
