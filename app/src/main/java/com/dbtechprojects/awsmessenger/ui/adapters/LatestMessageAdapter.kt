@@ -5,14 +5,11 @@ import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.fragment.app.viewModels
 import androidx.recyclerview.widget.RecyclerView
-import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.LatestMessage
 import com.dbtechprojects.awsmessenger.R
 import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.database.DatabaseHandler
-import com.dbtechprojects.awsmessenger.ui.fragments.MessagesViewModel
 import com.dbtechprojects.awsmessenger.util.Constants
 import com.dbtechprojects.awsmessenger.util.ImageUtils
 import kotlinx.android.synthetic.main.user_item.view.*
@@ -30,7 +27,7 @@ class LatestMessageAdapter(
     ): RecyclerView.Adapter<LatestMessageAdapter.UserViewHolder>() {
 
     private var onClickListener: OnClickListener? = null
-
+    private var db = DatabaseHandler()
 
 
     inner class UserViewHolder(itemview: View): RecyclerView.ViewHolder(itemview)
@@ -48,7 +45,7 @@ class LatestMessageAdapter(
             //LatestMessage is not from current user setup recycler view accordingly
 
             GlobalScope.launch(Dispatchers.IO) {
-                val user = DatabaseHandler().getUserFromId(LatestMessage.fromid)
+                val user = db.getUserFromId(LatestMessage.fromid)
                 withContext(Dispatchers.Main){
 
                     holder.itemView.user_item_usernametxt.text = user.username
@@ -86,7 +83,7 @@ class LatestMessageAdapter(
             }
         } else {
             GlobalScope.launch(Dispatchers.IO) {
-                val user = DatabaseHandler().getUserFromId(LatestMessage.toid)
+                val user = db.getUserFromId(LatestMessage.toid)
                 withContext(Dispatchers.Main) {
                     holder.itemView.user_item_usernametxt.text = user.username
                     if (user.profilePhotoUrl != null){

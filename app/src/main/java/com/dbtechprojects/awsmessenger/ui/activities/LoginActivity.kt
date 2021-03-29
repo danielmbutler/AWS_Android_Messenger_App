@@ -10,7 +10,7 @@ import androidx.activity.viewModels
 import androidx.lifecycle.Observer
 import com.amplifyframework.core.Amplify
 import com.dbtechprojects.awsmessenger.R
-import com.dbtechprojects.awsmessenger.database.AmplifyAuth
+import com.dbtechprojects.awsmessenger.ui.viewmodels.LoginViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_login.*
 

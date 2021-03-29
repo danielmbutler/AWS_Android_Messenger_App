@@ -13,20 +13,18 @@ import androidx.recyclerview.widget.DividerItemDecoration
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.amplifyframework.datastore.generated.model.LatestMessage
 import com.amplifyframework.datastore.generated.model.User
-import com.dbtechprojects.awsmessenger.database.AmplifyAuth
-import com.dbtechprojects.awsmessenger.database.DatabaseListener
+import com.dbtechprojects.awsmessenger.R
 import com.dbtechprojects.awsmessenger.databinding.FragmentMessagesBinding
 import com.dbtechprojects.awsmessenger.ui.activities.ChatLogActivity
 import com.dbtechprojects.awsmessenger.ui.activities.LoginActivity
 import com.dbtechprojects.awsmessenger.ui.adapters.LatestMessageAdapter
+import com.dbtechprojects.awsmessenger.ui.viewmodels.MessagesViewModel
 import com.dbtechprojects.awsmessenger.util.Mapper
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.android.synthetic.main.activity_chat_log.*
 import kotlinx.android.synthetic.main.fragment_messages.*
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 
 @AndroidEntryPoint
 class MessagesFragment : Fragment() {
@@ -35,6 +33,9 @@ class MessagesFragment : Fragment() {
     private lateinit var binding: FragmentMessagesBinding
     private lateinit var User: User
     private var mAdapter: LatestMessageAdapter? = null
+    private val TAG = "MessagesFragment"
+    private var LatestMessages = mutableListOf<LatestMessage>()
+
 
 
     override fun onCreateView(
@@ -45,8 +46,14 @@ class MessagesFragment : Fragment() {
         binding = FragmentMessagesBinding.inflate(inflater, container, false)
         val view = binding.root
 
+        //setup Latest messages Observer
+
+
+
             // check sign in from amplify auth class
             checkSignIn()
+
+
 
 
 
@@ -54,16 +61,44 @@ class MessagesFragment : Fragment() {
         return view
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        Log.d(TAG, "fragment destoryed")
+
+
+    }
+
     private fun checkSignIn(){
+        Log.d("checksignin", "run")
         viewModel.checkSessionValue()
 
-        viewModel.getSessionValue().observe(viewLifecycleOwner, Observer { result ->
+        val sessionvalueObserver = viewModel.getSessionValue()
+
+        sessionvalueObserver.observe(viewLifecycleOwner, Observer { result ->
+            Log.d("checksignin", "get session value")
             if (result){
-                viewModel.QueryLoggedInUserObject()
-                viewModel.getLoggedInUserObject().observe(viewLifecycleOwner, Observer { user ->
+                     viewModel.QueryLoggedInUserObject()
+                sessionvalueObserver.removeObservers(viewLifecycleOwner)
+                val userObjectObserver = viewModel.getLoggedInUserObject()
+                userObjectObserver.observe(viewLifecycleOwner, Observer { user ->
+                    Log.d("checksignin", "get loggedInUserObject")
                     if (user.id != "error"){
                         User = user
-                        getLatestMessages(User)
+                        userObjectObserver.removeObservers(viewLifecycleOwner)
+                        viewModel.QueryLatestMessages(user.id)
+
+                        val latestmessageObserver = viewModel.getLatestMessages()
+
+
+                        latestmessageObserver.observe(viewLifecycleOwner, Observer { messages->
+                              Log.d("checksignin", "found new list")
+                              LatestMessages = messages as MutableList<LatestMessage>
+                              setuprv(LatestMessages, User)
+                            latestmessageObserver.removeObservers(viewLifecycleOwner)
+
+                        })
+
+                        Log.d("checksignin", "listen for messeages being called")
                         ListenForMessages()
                     }
                 })
@@ -97,17 +132,21 @@ class MessagesFragment : Fragment() {
             override fun onClick(position: Int, model: User, message: LatestMessage,view: View) {
                 Log.d("MessageActivity", "clicked")
 
-                if (message.readReceipt == "unread"){
-                    GlobalScope.launch(Dispatchers.IO) {
-                        viewModel.setLatestMessageAsRead(message)
+                if (message.fromid != User.id){
+                    if (message.readReceipt == "unread"){
+                        GlobalScope.launch(Dispatchers.IO) {
+                            viewModel.setLatestMessageAsRead(message)
+                        }
                     }
                 }
 
                 val parcelableuser = Mapper().UserToLocalUserModel(model)
 
+                LatestMessages = mutableListOf()
                 val intent = Intent(requireContext(), ChatLogActivity::class.java)
                 intent.putExtra("user", parcelableuser)
                 startActivity(intent)
+
             }
 
         })
@@ -118,28 +157,19 @@ class MessagesFragment : Fragment() {
 
     }
 
-    override fun onResume() {
-        super.onResume()
-    }
 
-    fun ListenForMessages(){
+
+    private fun ListenForMessages(){
 
              MessagesFragmentRV.invalidate()
              // setup latest message listener , for each new message refresh recyclerview
              viewModel.setupLatestMessageListener(User)
              viewModel.getIncomingLatestMessage().observe(viewLifecycleOwner, Observer { message ->
-                  getLatestMessages(User)
+                  viewModel.QueryLatestMessages(User.id)
              })
 
     }
 
-     fun getLatestMessages(user: User){
-        viewModel.QueryLatestMessages(user.id)
-       viewModel.getLatestMessages().observe(viewLifecycleOwner, Observer { messages->
-            setuprv(messages, User)
-        })
-
-    }
 
 
 }

@@ -18,9 +18,9 @@ import androidx.recyclerview.widget.LinearLayoutManager
 import com.amplifyframework.datastore.generated.model.ChatMessage
 import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.R
-import com.dbtechprojects.awsmessenger.database.DatabaseListener
 import com.dbtechprojects.awsmessenger.database.entitites.LocalUserModel
 import com.dbtechprojects.awsmessenger.ui.dialog.SendImageDialog
+import com.dbtechprojects.awsmessenger.ui.viewmodels.ChatLogViewModel
 import com.dbtechprojects.awsmessenger.util.Constants
 import com.dbtechprojects.awsmessenger.util.ImageUtils
 import com.dbtechprojects.awsmessenger.util.Mapper
@@ -38,9 +38,6 @@ import kotlinx.android.synthetic.main.chat_from_row_with_image.view.chat_from_Ro
 import kotlinx.android.synthetic.main.chat_to_row.view.*
 import kotlinx.android.synthetic.main.chat_to_row_with_image.view.*
 import kotlinx.android.synthetic.main.fragment_settings.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 import java.io.IOException
 import java.util.*
 

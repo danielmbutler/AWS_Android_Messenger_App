@@ -8,17 +8,14 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import androidx.recyclerview.widget.LinearLayoutManager
-import com.amplifyframework.core.Amplify
 import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.databinding.FragmentUserBinding
 import com.dbtechprojects.awsmessenger.ui.activities.ChatLogActivity
 import com.dbtechprojects.awsmessenger.ui.adapters.UserAdapter
+import com.dbtechprojects.awsmessenger.ui.viewmodels.UsersViewModel
 import com.dbtechprojects.awsmessenger.util.Mapper
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.fragment_user.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
 
 
 @AndroidEntryPoint

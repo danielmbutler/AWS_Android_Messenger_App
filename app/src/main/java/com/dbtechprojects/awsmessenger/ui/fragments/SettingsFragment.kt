@@ -18,23 +18,16 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
 import com.amplifyframework.core.Amplify
-import com.amplifyframework.core.model.query.Where
-import com.amplifyframework.datastore.DataStoreException
-import com.amplifyframework.datastore.DataStoreItemChange
 import com.amplifyframework.datastore.generated.model.User
-import com.dbtechprojects.awsmessenger.database.AmplifyAuth
 import com.dbtechprojects.awsmessenger.databinding.FragmentSettingsBinding
 import com.dbtechprojects.awsmessenger.ui.activities.LoginActivity
+import com.dbtechprojects.awsmessenger.ui.viewmodels.SettingsViewModel
 import com.dbtechprojects.awsmessenger.util.Constants
 import com.dbtechprojects.awsmessenger.util.ImageUtils
 import com.dbtechprojects.awsmessenger.util.SharedPref
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_register.*
 import kotlinx.android.synthetic.main.fragment_settings.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import java.io.IOException
 
 @AndroidEntryPoint

@@ -7,24 +7,13 @@ import android.util.Log
 import android.view.View
 import android.widget.Toast
 import androidx.activity.viewModels
-import androidx.fragment.app.viewModels
 import androidx.lifecycle.Observer
-import com.amplifyframework.core.Amplify
-import com.amplifyframework.datastore.DataStoreException
-import com.amplifyframework.datastore.DataStoreItemChange
-import com.amplifyframework.datastore.generated.model.User
 import com.dbtechprojects.awsmessenger.R
 import com.dbtechprojects.awsmessenger.database.AmplifyAuth
-import com.dbtechprojects.awsmessenger.ui.fragments.SettingsViewModel
+import com.dbtechprojects.awsmessenger.ui.viewmodels.RegisterViewModel
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.android.synthetic.main.activity_register.*
 import kotlinx.android.synthetic.main.fragment_settings.*
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
-import kotlinx.coroutines.flow.collect
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
-import kotlin.math.log
 
 @AndroidEntryPoint
 class RegisterActivity : AppCompatActivity() {
