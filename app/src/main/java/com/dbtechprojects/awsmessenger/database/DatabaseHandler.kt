@@ -126,22 +126,6 @@ class DatabaseHandler{
             .readReceipt(readreceipt)
             .build()
 
-        Amplify.DataStore.query(LatestMessage::class.java, Where.matches(
-            LatestMessage.FROMID.eq(fromid).and(LatestMessage.TOID.eq(toid))
-                .or(LatestMessage.TOID.eq(fromid).and(LatestMessage.FROMID.eq(toid)))
-        ),
-            { matches ->
-                matches.forEach {
-                    Amplify.DataStore.delete(it,
-                        { Log.i("MyAmplifyApp", "Deleted a post.") },
-                        { Log.e("MyAmplifyApp", "Delete failed.", it) }
-                    )
-                }
-
-            },
-            { Log.e("MyAmplifyApp", "Query failed.", it) }
-        )
-
         try {
             Amplify.DataStore.save(latestMessage, this::onSuccessLatestMessage, this::onFailure)
             Log.i("MyAmplifyApp", "Saved a new post successfully")
@@ -149,9 +133,7 @@ class DatabaseHandler{
             Log.e("MyAmplifyApp", "Error saving post", error)
         }
 
-
     }
-
 
     // if user who is sent the message is observing chat log
     fun createLatestMessageasRead(

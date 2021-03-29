@@ -87,16 +87,7 @@ class MessagesFragment : Fragment() {
                         userObjectObserver.removeObservers(viewLifecycleOwner)
                         viewModel.QueryLatestMessages(user.id)
 
-                        val latestmessageObserver = viewModel.getLatestMessages()
-
-
-                        latestmessageObserver.observe(viewLifecycleOwner, Observer { messages->
-                              Log.d("checksignin", "found new list")
-                              LatestMessages = messages as MutableList<LatestMessage>
-                              setuprv(LatestMessages, User)
-                            latestmessageObserver.removeObservers(viewLifecycleOwner)
-
-                        })
+                       getLatestMessages()
 
                         Log.d("checksignin", "listen for messeages being called")
                         ListenForMessages()
@@ -118,6 +109,7 @@ class MessagesFragment : Fragment() {
 
 
     private fun setuprv(list: List<LatestMessage>, user: User){
+
 
         val lm = LinearLayoutManager(requireContext())
         MessagesFragmentRV.layoutManager = lm
@@ -153,21 +145,33 @@ class MessagesFragment : Fragment() {
 
         MessagesFragmentRV.adapter = mAdapter
         // add faintline under RV Item
-        MessagesFragmentRV.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
+        //MessagesFragmentRV.addItemDecoration(DividerItemDecoration(requireContext(), DividerItemDecoration.VERTICAL))
 
     }
 
 
 
     private fun ListenForMessages(){
-
-             MessagesFragmentRV.invalidate()
              // setup latest message listener , for each new message refresh recyclerview
              viewModel.setupLatestMessageListener(User)
              viewModel.getIncomingLatestMessage().observe(viewLifecycleOwner, Observer { message ->
                   viewModel.QueryLatestMessages(User.id)
+                 getLatestMessages()
              })
 
+    }
+
+    private fun getLatestMessages(){
+        val latestmessageObserver = viewModel.getLatestMessages()
+
+
+        latestmessageObserver.observe(viewLifecycleOwner, Observer { messages->
+            Log.d("checksignin", "found new list")
+            LatestMessages = messages as MutableList<LatestMessage>
+            MessagesFragmentRV.invalidate()
+            setuprv(LatestMessages, User)
+
+        })
     }
 
 
